@@ -8,30 +8,46 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class VisaAppointmentService {
-    @Value("${userBucket.path}")
-    private String url;
+    @Value("${visa.page.url}")
+    private String visaPageUrl;
+    @Value("${visa.page.appointment.anchor.text}")
+    private String visaPageAppointmentAnchorText;
+    @Value("${visa.page.form.name}")
+    private String visaPageFormName;
+    @Value("${visa.page.form.lastname}")
+    private String visaPageFormLastName;
+    @Value("${visa.page.form.birth.day}")
+    private String visaPageFormBirthDay;
+    @Value("${visa.page.form.birth.month}")
+    private String visaPageFormBirthMonth;
+    @Value("${visa.page.form.birth.year}")
+    private String visaPageFormBirthYear;
+    @Value("${visa.page.form.wait.number}")
+    private String visaPageFormWaitNumber;
+
+    @Value("${visa.page.change.button.id}")
+    private String visaPageChangeButtonId;
 
     @Autowired
     private VisaWebClient webClient;
 
     @Scheduled(cron = "0 0/5 * 1/1 * ? *")
-    public void checkVisaAppointment() {
-        webClient.goTo(url);
-        webClient.clickAnchor("Make an appointment");
-        webClient.clickButton("Change date");
-        webClient.fillInForm();
-        webClient.clickAnchor("Next");
+    public boolean checkVisaAppointment() {
+        webClient.goTo(visaPageUrl);
+        webClient.clickAnchor(visaPageAppointmentAnchorText);
+        webClient.clickButton(visaPageChangeButtonId);
+        webClient.fillInForm(visaPageFormName, visaPageFormLastName, visaPageFormBirthDay,
+                visaPageFormBirthMonth, visaPageFormBirthYear, visaPageFormWaitNumber);
 
-
-        if (webClient.hasAvailableDate()) {
-            notifyAboutAvailableDate();
-        } else {
+        for (int i = 0; i < 2; ++i) {
             webClient.clickAnchor("Next");
             if (webClient.hasAvailableDate()) {
                 notifyAboutAvailableDate();
+                return true;
             }
         }
 
+        return false;
     }
 
     private void notifyAboutAvailableDate() {
