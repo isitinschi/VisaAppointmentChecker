@@ -14,7 +14,6 @@ import java.util.List;
 public class VisaWebClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(VisaWebClient.class);
 
-    private static final String FORM_NAME = "form_name";
     private static final String FORM_FIELD_NAME = "tfFirstName";
     private static final String FORM_FIELD_LASTNAME = "tfLastName";
     private static final String FORM_FIELD_BIRTH_DAY = "cobGebDatumTag";
@@ -91,6 +90,14 @@ public class VisaWebClient {
     }
 
     public boolean hasAvailableDate() {
+        List<HtmlAnchor> anchors = currentPage.getAnchors();
+        for (HtmlAnchor anchor : anchors) {
+            if (anchor.getAttribute("style").contains("color: rgb(0, 0, 255)")) {
+                DomElement child = anchor.getFirstElementChild();
+                int day = Integer.valueOf(child.getNodeValue());
+                return true;
+            }
+        }
         return false;
     }
 }

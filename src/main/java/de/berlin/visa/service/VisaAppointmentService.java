@@ -1,6 +1,8 @@
 package de.berlin.visa.service;
 
 import de.berlin.visa.web.client.VisaWebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,12 +26,15 @@ public class VisaAppointmentService {
     private String visaPageFormBirthYear;
     @Value("${visa.page.form.wait.number}")
     private String visaPageFormWaitNumber;
-
+    @Value("${visa.page.calendar.next.anchor.id}")
+    private String visaPageCalendarNextAnchorId;
     @Value("${visa.page.change.button.id}")
     private String visaPageChangeButtonId;
 
     @Autowired
     private VisaWebClient webClient;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VisaAppointmentService.class);
 
     @Scheduled(cron = "0 0/5 * 1/1 * ? *")
     public boolean checkVisaAppointment() {
@@ -40,7 +45,7 @@ public class VisaAppointmentService {
                 visaPageFormBirthMonth, visaPageFormBirthYear, visaPageFormWaitNumber);
 
         for (int i = 0; i < 2; ++i) {
-            webClient.clickAnchor("Next");
+            webClient.clickAnchor(visaPageCalendarNextAnchorId);
             if (webClient.hasAvailableDate()) {
                 notifyAboutAvailableDate();
                 return true;
@@ -51,6 +56,6 @@ public class VisaAppointmentService {
     }
 
     private void notifyAboutAvailableDate() {
-
+        LOGGER.info("!!!Yohoo!!! Found available date!!!");
     }
 }
