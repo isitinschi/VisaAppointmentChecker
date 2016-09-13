@@ -20,7 +20,6 @@ public class VisaWebClient {
     private static final String FORM_FIELD_BIRTH_MONTH = "cobGebDatumMonat";
     private static final String FORM_FIELD_BIRTH_YEAR = "tfGebDatumJahr";
     private static final String FORM_FIELD_WAIT_NUMBER = "tfVorgangsnummer";
-    private static final String FORM_FIELD_NEXT = "txtNextpage";
 
     private final WebClient webClient;
 
@@ -29,6 +28,8 @@ public class VisaWebClient {
     public VisaWebClient() {
         webClient = new WebClient(BrowserVersion.CHROME);
         webClient.getOptions().setCssEnabled(false);
+        webClient.waitForBackgroundJavaScript(10000);
+        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
     }
 
     public void goTo(final String url) {
@@ -39,65 +40,75 @@ public class VisaWebClient {
         }
     }
 
+    public void clickElementById(String elementId) {
+        try {
+            final DomElement element = currentPage.getElementById(elementId);
+            element.mouseOver();
+            currentPage = element.click();
+            element.mouseOut();
+        } catch (IOException e) {
+            LOGGER.error("Failed clicking html page element with id " + elementId, e);
+        }
+    }
+
     public void clickAnchor(String anchorText) {
         try {
             final HtmlAnchor anchor = currentPage.getAnchorByText(anchorText);
+            anchor.mouseOver();
             currentPage = anchor.click();
         } catch (IOException e) {
             LOGGER.error("Failed following anchor with text " + anchorText, e);
         }
     }
 
-    public void clickButton(String buttonId) {
-        try {
-            HtmlElement button = (HtmlElement) currentPage.getElementById(buttonId);
-            currentPage = button.click();
-        } catch (IOException e) {
-            LOGGER.error("Failed clicking button with id " + buttonId, e);
-        }
-    }
-
     public void fillInForm(String name, String lastName, String birthDay, String birthMonth, String birthYear, String waitNumber) {
+        currentPage.executeJavaScript("initModel(); setFocus(); onLoad();");
+
         List<HtmlForm> forms = currentPage.getForms();
         if (forms == null || forms.size() != 1) {
             throw new RuntimeException("I expected exactly one form on this page. Please, investigate why I am wrong");
-
         }
         final HtmlForm form = forms.get(0);
 
-        final HtmlTextInput nameField = form.getInputByName(FORM_FIELD_NAME);
-        final HtmlTextInput lastNameField = form.getInputByName(FORM_FIELD_LASTNAME);
+        final HtmlInput nameField = form.getInputByName(FORM_FIELD_NAME);
+        final HtmlInput lastNameField = form.getInputByName(FORM_FIELD_LASTNAME);
         final HtmlSelect birthDayField = form.getSelectByName(FORM_FIELD_BIRTH_DAY);
         final HtmlSelect birthMonthField = form.getSelectByName(FORM_FIELD_BIRTH_MONTH);
-        final HtmlTextInput birthYearField = form.getInputByName(FORM_FIELD_BIRTH_YEAR);
-        final HtmlTextInput waitNumberField = form.getInputByName(FORM_FIELD_WAIT_NUMBER);
-        final HtmlHiddenInput button = form.getInputByName(FORM_FIELD_NEXT);
+        final HtmlInput birthYearField = form.getInputByName(FORM_FIELD_BIRTH_YEAR);
+        final HtmlInput waitNumberField = form.getInputByName(FORM_FIELD_WAIT_NUMBER);
 
+        nameField.focus();
         nameField.setValueAttribute(name);
+        nameField.blur();
+
+        lastNameField.focus();
         lastNameField.setValueAttribute(lastName);
+        lastNameField.blur();
+
         HtmlOption option = birthDayField.getOptionByValue(birthDay);
         birthDayField.setSelectedAttribute(option, true);
         option = birthMonthField.getOptionByValue(birthMonth);
         birthMonthField.setSelectedAttribute(option, true);
-        birthYearField.setValueAttribute(birthYear);
-        waitNumberField.setValueAttribute(waitNumber);
 
-        try {
-            currentPage = button.click();
-        } catch (IOException e) {
-            LOGGER.error("Failed clicking form button with id " + "bla", e);
-        }
+        birthYearField.focus();
+        birthYearField.setValueAttribute(birthYear);
+        birthYearField.blur();
+
+        waitNumberField.focus();
+        waitNumberField.setValueAttribute(waitNumber);
+        waitNumberField.blur();
     }
 
-    public boolean hasAvailableDate() {
+    public int getAvailableDay() {
+        LOGGER.info(currentPage.getWebResponse().getContentAsString());
         List<HtmlAnchor> anchors = currentPage.getAnchors();
         for (HtmlAnchor anchor : anchors) {
             if (anchor.getAttribute("style").contains("color: rgb(0, 0, 255)")) {
                 DomElement child = anchor.getFirstElementChild();
                 int day = Integer.valueOf(child.getNodeValue());
-                return true;
+                return day;
             }
         }
-        return false;
+        return -1;
     }
 }

@@ -14,6 +14,10 @@ public class VisaAppointmentService {
     private String visaPageUrl;
     @Value("${visa.page.appointment.anchor.text}")
     private String visaPageAppointmentAnchorText;
+    @Value("${visa.page.language.change.div.id}")
+    private String visaPageLanguageChangeDivId;
+    @Value("${visa.page.form.next.anchor.id}")
+    private String visaPageFormNextAnchorId;
     @Value("${visa.page.form.name}")
     private String visaPageFormName;
     @Value("${visa.page.form.lastname}")
@@ -40,22 +44,34 @@ public class VisaAppointmentService {
     public boolean checkVisaAppointment() {
         webClient.goTo(visaPageUrl);
         webClient.clickAnchor(visaPageAppointmentAnchorText);
-        webClient.clickButton(visaPageChangeButtonId);
+
+        webClient.clickElementById(visaPageLanguageChangeDivId);
+        webClient.clickElementById(visaPageChangeButtonId);
+
         webClient.fillInForm(visaPageFormName, visaPageFormLastName, visaPageFormBirthDay,
                 visaPageFormBirthMonth, visaPageFormBirthYear, visaPageFormWaitNumber);
 
-        for (int i = 0; i < 2; ++i) {
-            webClient.clickAnchor(visaPageCalendarNextAnchorId);
-            if (webClient.hasAvailableDate()) {
-                notifyAboutAvailableDate();
+        webClient.clickElementById(visaPageFormNextAnchorId);
+
+        for (int i = 0; i < 7; ++i) {
+            int day = webClient.getAvailableDay();
+            if (day != -1) {
+                notifyAboutAvailableDate(i, day);
                 return true;
             }
+            webClient.clickElementById(visaPageCalendarNextAnchorId);
         }
 
         return false;
     }
 
-    private void notifyAboutAvailableDate() {
+    /**
+     * Notifies interested people about available appointment date
+     *
+     * @param month month index started from current month. So, current month is 0, next month is 1 and so on
+     * @param day available day of the month
+     */
+    private void notifyAboutAvailableDate(int month, int day) {
         LOGGER.info("!!!Yohoo!!! Found available date!!!");
     }
 }
