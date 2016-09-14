@@ -21,6 +21,8 @@ public class VisaWebClient {
     private static final String FORM_FIELD_BIRTH_YEAR = "tfGebDatumJahr";
     private static final String FORM_FIELD_WAIT_NUMBER = "tfVorgangsnummer";
 
+    private static final String PAGE_CALENDAR_MONTH_FIELD_NAME = "month";
+
     private final WebClient webClient;
 
     private HtmlPage currentPage;
@@ -28,8 +30,6 @@ public class VisaWebClient {
     public VisaWebClient() {
         webClient = new WebClient(BrowserVersion.CHROME);
         webClient.getOptions().setCssEnabled(false);
-        webClient.waitForBackgroundJavaScript(10000);
-        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
     }
 
     public void goTo(final String url) {
@@ -99,16 +99,17 @@ public class VisaWebClient {
         waitNumberField.blur();
     }
 
-    public int getAvailableDay() {
-        LOGGER.info(currentPage.getWebResponse().getContentAsString());
+    public String getAvailableDay() {
         List<HtmlAnchor> anchors = currentPage.getAnchors();
         for (HtmlAnchor anchor : anchors) {
-            if (anchor.getAttribute("style").contains("color: rgb(0, 0, 255)")) {
-                DomElement child = anchor.getFirstElementChild();
-                int day = Integer.valueOf(child.getNodeValue());
-                return day;
+            if (anchor.getAttribute("style").contains("color: rgb(0,0,255)")) {
+                final DomNode child = anchor.getFirstElementChild().getFirstChild();
+                String day = child.getNodeValue();
+                final HtmlInput monthElement = currentPage.getElementByName(PAGE_CALENDAR_MONTH_FIELD_NAME);
+                String month = monthElement.getValueAttribute();
+                return day + " of " + month;
             }
         }
-        return -1;
+        return null;
     }
 }

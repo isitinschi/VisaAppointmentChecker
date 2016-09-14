@@ -53,10 +53,10 @@ public class VisaAppointmentService {
 
         webClient.clickElementById(visaPageFormNextAnchorId);
 
-        for (int i = 0; i < 7; ++i) {
-            int day = webClient.getAvailableDay();
-            if (day != -1) {
-                notifyAboutAvailableDate(i, day);
+        for (int i = 0; i < 5; ++i) {
+            String availableDay = webClient.getAvailableDay();
+            if (availableDay != null) {
+                notifyAboutAvailableDate(availableDay);
                 return true;
             }
             webClient.clickElementById(visaPageCalendarNextAnchorId);
@@ -68,10 +68,9 @@ public class VisaAppointmentService {
     /**
      * Notifies interested people about available appointment date
      *
-     * @param month month index started from current month. So, current month is 0, next month is 1 and so on
-     * @param day available day of the month
+     * @param availableDay available day and month in following format: "<day> <month>";
      */
-    private void notifyAboutAvailableDate(int month, int day) {
-        LOGGER.info("!!!Yohoo!!! Found available date!!!");
+    private void notifyAboutAvailableDate(String availableDay) {
+        LOGGER.info("!!!Yohoo!!! Found available date!!! It is " + availableDay);
     }
 }
