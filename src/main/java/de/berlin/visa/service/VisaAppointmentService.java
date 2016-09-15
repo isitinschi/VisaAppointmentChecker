@@ -37,11 +37,20 @@ public class VisaAppointmentService {
 
     @Autowired
     private VisaWebClient webClient;
+    @Autowired
+    private MailService mailService;
+
+    private String lastFoundDate;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VisaAppointmentService.class);
 
-    @Scheduled(cron = "0 0/5 * 1/1 * ? *")
-    public boolean checkVisaAppointment() {
+    /**
+     * Checks closest available appointment date and notifies interested person. This method is called a=every 5 minutes
+     */
+    @Scheduled(cron = "0 0/5 * 1/1 * *")
+    public void checkVisaAppointment() {
+        LOGGER.info("Started checking appointment for visa...");
+
         webClient.goTo(visaPageUrl);
         webClient.clickAnchor(visaPageAppointmentAnchorText);
 
@@ -57,20 +66,26 @@ public class VisaAppointmentService {
             String availableDay = webClient.getAvailableDay();
             if (availableDay != null) {
                 notifyAboutAvailableDate(availableDay);
-                return true;
             }
             webClient.clickElementById(visaPageCalendarNextAnchorId);
         }
 
-        return false;
+        LOGGER.info("Finished checking appointment for visa");
     }
 
     /**
      * Notifies interested people about available appointment date
      *
-     * @param availableDay available day and month in following format: "<day> <month>";
+     * @param availableDay available day and month in following format: "<day> of <month>";
      */
     private void notifyAboutAvailableDate(String availableDay) {
-        LOGGER.info("!!!Yohoo!!! Found available date!!! It is " + availableDay);
+        LOGGER.info("!!!Yohoo!!! Found available date!!! It is {}", availableDay);
+
+        if (!availableDay.equals(lastFoundDate)) {
+            boolean sent = mailService.send(availableDay);
+            if (sent) {
+                lastFoundDate = availableDay;
+            }
+        }
     }
 }

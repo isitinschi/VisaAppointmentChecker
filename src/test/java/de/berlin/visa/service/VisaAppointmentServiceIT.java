@@ -1,6 +1,5 @@
 package de.berlin.visa.service;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +14,6 @@ public class VisaAppointmentServiceIT {
 
     @Test
     public void checkVisaAppointment() {
-        Assertions.assertThat(visaAppointmentService.checkVisaAppointment()).isTrue();
+        visaAppointmentService.checkVisaAppointment();
     }
 }

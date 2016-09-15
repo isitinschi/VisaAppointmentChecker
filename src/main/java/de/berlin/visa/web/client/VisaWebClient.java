@@ -30,6 +30,7 @@ public class VisaWebClient {
     public VisaWebClient() {
         webClient = new WebClient(BrowserVersion.CHROME);
         webClient.getOptions().setCssEnabled(false);
+        webClient.getOptions().setThrowExceptionOnScriptError(false);
     }
 
     public void goTo(final String url) {
